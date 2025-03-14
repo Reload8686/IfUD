@@ -1,0 +1,14 @@
+#!/bin/sh
+[ -z "$IF_PPP_PROVIDER" ] && exit 0
+
+case "$PHASE" in
+create)
+	${MOCK} pon $IF_PPP_PROVIDER
+	;;
+destroy)
+	${MOCK} poff $IF_PPP_PROVIDER
+	;;
+depend)
+	echo "$IF_PPP_PHYSDEV"
+	;;
+esac

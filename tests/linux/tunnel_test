@@ -1,0 +1,65 @@
+#!/usr/bin/env atf-sh
+
+. $(atf_get_srcdir)/../test_env.sh
+EXECUTOR="$(atf_get_srcdir)/../../executor-scripts/linux/tunnel"
+
+tests_init \
+	tunnel_bringup \
+	tunnel_teardown \
+	gretap_up \
+	gretap_down \
+	ip6gretap_up
+
+tunnel_bringup_body() {
+	export MOCK=echo IFACE=tun0 PHASE=create IF_TUNNEL_MODE=gre \
+		IF_TUNNEL_LOCAL=1.2.3.4 IF_TUNNEL_REMOTE=5.6.7.8 \
+		IF_TUNNEL_TTL=255
+	atf_check -s exit:0 \
+		-o match:"ip -4 tunnel add tun0" \
+		-o match:"mode gre" \
+		-o match:"ttl '255'" \
+		-o match:"local '1.2.3.4'" \
+		-o match:"remote '5.6.7.8'" \
+		${EXECUTOR}
+}
+
+tunnel_teardown_body() {
+	export MOCK=echo IFACE=tun0 PHASE=destroy IF_TUNNEL_MODE=gre \
+		IF_TUNNEL_LOCAL=1.2.3.4 IF_TUNNEL_REMOTE=5.6.7.8 \
+		IF_TUNNEL_TTL=255
+	atf_check -s exit:0 \
+		-o match:"ip -4 tunnel del tun0" \
+		${EXECUTOR}
+}
+
+
+gretap_up_body() {
+	export MOCK=echo IFACE=foo PHASE=create IF_TUNNEL_MODE=gretap \
+		IF_TUNNEL_LOCAL=1.2.3.4 IF_TUNNEL_REMOTE=5.6.7.8
+	atf_check -s exit:0 \
+		-o match:"ip -4 link add foo" \
+		-o match:"type gretap" \
+		-o match:"local '1.2.3.4'" \
+		-o match:"remote '5.6.7.8'" \
+		${EXECUTOR}
+}
+
+gretap_down_body() {
+	export MOCK=echo IFACE=foo PHASE=destroy IF_TUNNEL_MODE=gretap \
+		IF_TUNNEL_LOCAL=1.2.3.4 IF_TUNNEL_REMOTE=5.6.7.8
+	atf_check -s exit:0 \
+		-o match:"ip -4 link del foo" \
+		${EXECUTOR}
+}
+
+ip6gretap_up_body() {
+	export MOCK=echo IFACE=foo PHASE=create IF_TUNNEL_MODE=ip6gretap \
+		IF_TUNNEL_LOCAL=2001:db8::aaaa IF_TUNNEL_REMOTE=2001:db8::eeee
+	atf_check -s exit:0 \
+		-o match:"ip -6 link add foo" \
+		-o match:"type gretap" \
+		-o match:"local '2001:db8::aaaa'" \
+		-o match:"remote '2001:db8::eeee'" \
+		${EXECUTOR}
+}
+
